@@ -2,6 +2,7 @@ package com.example.TCourse;
 
 import com.example.TCourse.dto.TokenDto;
 import com.example.TCourse.dto.UserDto;
+import com.example.TCourse.exception.NotFoundException;
 import com.example.TCourse.service.AuthService;
 import com.example.TCourse.service.UserService;
 import com.example.TCourse.util.JwtTokenUtil;
@@ -25,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class TCourseApplicationTestsAuth {
+class TCourseApplicationTestsAuthAndUser {
 
     @Autowired
     private AuthService authService;
@@ -39,13 +40,10 @@ class TCourseApplicationTestsAuth {
 
     @Test
     public void registerUser_WhenValidUserDto_ReturnsOkResponse() {
-        // Arrange
         UserDto userDto = new UserDto("mishauser", "password123", "misha", "user");
 
-        // Act
         ResponseEntity<String> response = authService.registerUser(userDto);
 
-        // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("User registered successfully", response.getBody());
         verify(userService).registerUser(userDto);
@@ -53,7 +51,6 @@ class TCourseApplicationTestsAuth {
 
     @Test
     public void authorizeUser_ValidCredentials_ReturnsTokenDto() throws Exception {
-        // Arrange
         UserDto user = new UserDto("mishauser", "password123", "misha", "user");
         String token = "generated_token";
         UserDetails userDetails = mock(UserDetails.class);
@@ -64,10 +61,8 @@ class TCourseApplicationTestsAuth {
         when(userService.loadUserByUsername(user.getUsername())).thenReturn(userDetails);
         when(jwtTokenUtil.generateToken(userDetails)).thenReturn(token);
 
-        // Act
         ResponseEntity<TokenDto> response = authService.authorizeUser(user);
 
-        // Assert
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(token, response.getBody().getToken());
         verify(authenticationManager).authenticate(
@@ -78,13 +73,11 @@ class TCourseApplicationTestsAuth {
 
     @Test
     public void authorizeUser1_InvalidCredentials_ThrowsException() throws InstantiationError {
-        // Arrange
         UserDto user = new UserDto("mishauser", "password123", "misha", "user");
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(AuthenticationException.class);
 
-        // Act and Assert
         assertThrows(InstantiationError.class, () -> authService.authorizeUser(user));
         verify(authenticationManager).authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
@@ -93,33 +86,26 @@ class TCourseApplicationTestsAuth {
 
     @Test
     void authorizeUser_InvalidCredentials_ThrowsException() throws Exception {
-        // Создаем заглушку для AuthenticationException
         AuthenticationException authenticationException = mock(AuthenticationException.class);
 
-        // Устанавливаем поведение заглушки
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(authenticationException);
 
-        // Проверяем, что исключение выбрасывается при вызове метода
         Exception exception = assertThrows(Exception.class, () -> authService.authorizeUser(new UserDto()));
         assertEquals("Invalid email/password", exception.getMessage());
 
-        // Проверяем вызовы методов
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
     @Test
     public void getUser_WhenExistingUserId_ReturnsOkResponseWithUserDto() {
-        // Arrange
         Long userId = 1L;
         UserDto userDto = new UserDto("mishauser", "password123", "misha", "user");
 
         when(userService.getUserById(userId)).thenReturn(Optional.of(userDto));
 
-        // Act
         ResponseEntity<UserDto> response = authService.getUser(userId);
 
-        // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(userDto, response.getBody());
         verify(userService).getUserById(userId);
@@ -127,13 +113,11 @@ class TCourseApplicationTestsAuth {
 
     @Test
     public void getUser_WhenNonExistingUserId_ThrowsException() {
-        // Arrange
         Long userId = 1L;
 
         when(userService.getUserById(userId)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             authService.getUser(userId);
         });
 

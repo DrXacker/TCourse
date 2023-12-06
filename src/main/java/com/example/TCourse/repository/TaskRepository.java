@@ -9,5 +9,5 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
     List<Task> findAllByUsername(String username);
 
-    List<Task> findByUsernameAndBodyContaining(String username, String searchText);
+    boolean deleteByUsernameAndId(String username, Long id);
 }

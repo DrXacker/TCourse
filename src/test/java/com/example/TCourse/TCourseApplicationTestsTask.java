@@ -7,11 +7,17 @@ import com.example.TCourse.entity.constant.Priority;
 import com.example.TCourse.exception.NotFoundException;
 import com.example.TCourse.repository.TaskRepository;
 import com.example.TCourse.service.TaskService;
+import com.example.TCourse.specifications.TaskSpecifications;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Example;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -24,7 +30,6 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class TCourseApplicationTestsTask {
-
     @Autowired
     private TaskService taskService;
 
@@ -33,7 +38,6 @@ class TCourseApplicationTestsTask {
 
     @Test
     void getTaskDtoById_ExistingTask_ReturnsTaskDto() {
-        // Arrange
         Long taskId = 1L;
         Task task = new Task(taskId, "some", "misha", false, Priority.Low,
                 Category.Homework, LocalDateTime.now(), LocalDateTime.now().plusHours(1));
@@ -42,10 +46,8 @@ class TCourseApplicationTestsTask {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        // Act
         TaskDto result = taskService.getTaskDtoById(taskId);
 
-        // Assert
         assertNotNull(result);
         assertEquals(expectedTaskDto, result);
         verify(taskRepository, times(1)).findById(taskId);
@@ -53,12 +55,10 @@ class TCourseApplicationTestsTask {
 
     @Test
     void getTaskDtoById_InvalidId_TaskNotFound() {
-        // Arrange
         Long taskId = 1L;
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
 
-        // Act and Assert
         Assertions.assertThrows(NotFoundException.class, () -> {
             taskService.getTaskDtoById(taskId);
         });
@@ -67,7 +67,6 @@ class TCourseApplicationTestsTask {
 
     @Test
     void getUserTasks_ReturnsListOfTaskDtos() {
-        // Arrange
         Principal principal = mock(Principal.class);
         String username = "misha";
 
@@ -93,7 +92,6 @@ class TCourseApplicationTestsTask {
 
         List<TaskDto> result = taskService.getUserTasks(principal);
 
-        // Assert
         Assertions.assertEquals(taskDtos.size(), result.size());
         verify(principal, times(1)).getName();
         verify(taskRepository, times(1)).findAllByUsername(username);
@@ -101,7 +99,6 @@ class TCourseApplicationTestsTask {
 
     @Test
     void createTask_ValidPrincipalAndTaskDto_TaskCreated() {
-        // Arrange
         Principal principal = mock(Principal.class);
         String username = "misha";
 
@@ -126,10 +123,8 @@ class TCourseApplicationTestsTask {
         when(taskRepository.save(task)).thenReturn(task);
         when(taskRepository.findAllByUsername(username)).thenReturn(userTasks);
 
-        // Act
         List<TaskDto> result = taskService.createTask(principal, taskDto);
 
-        // Assert
         Assertions.assertEquals(userTaskDtos.size(), result.size());
         verify(principal, times(2)).getName();
         verify(taskRepository, times(1)).save(task);
@@ -138,7 +133,6 @@ class TCourseApplicationTestsTask {
 
     @Test
     void updateTask_ValidPrincipalAndTaskIdAndTaskDto_TaskUpdated() {
-        // Arrange
         Principal principal = mock(Principal.class);
         String username = "misha";
         Long taskId = 1L;
@@ -161,10 +155,8 @@ class TCourseApplicationTestsTask {
         when(taskRepository.save(task)).thenReturn(task);
         when(taskRepository.findAllByUsername(username)).thenReturn(userTasks);
 
-        // Act
         List<TaskDto> result = taskService.updateTask(principal, taskId, taskDto);
 
-        // Assert
         Assertions.assertEquals(userTaskDtos.size(), result.size());
         verify(principal, times(2)).getName();
         verify(taskRepository, times(1)).findById(taskId);
@@ -174,7 +166,6 @@ class TCourseApplicationTestsTask {
 
     @Test
     void updateTask_InvalidPrincipal_InsufficientRights() {
-        // Arrange
         Principal principal = mock(Principal.class);
         String username = "misha";
         Long taskId = 1L;
@@ -186,7 +177,6 @@ class TCourseApplicationTestsTask {
         when(principal.getName()).thenReturn(username);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        // Act and Assert
         Assertions.assertThrows(RuntimeException.class, () -> {
             taskService.updateTask(principal, taskId, taskDto);
         });

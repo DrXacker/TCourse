@@ -45,10 +45,10 @@ public class TaskController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/search")
-    public ResponseEntity<List<TaskDto>> searchTasks(HttpServletRequest request, @RequestBody String searchText) {
+    @DeleteMapping("")
+    public ResponseEntity<Boolean> deleteTask(HttpServletRequest request, @PathVariable("taskId") Long taskId){
         Principal principal = request.getUserPrincipal();
-        return ResponseEntity.ok(taskService.searchTasks(principal, searchText));
+        return ResponseEntity.ok(taskService.deleteTask(principal, taskId));
     }
 
     @PreAuthorize("isAuthenticated()")

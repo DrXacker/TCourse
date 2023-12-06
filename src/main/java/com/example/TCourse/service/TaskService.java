@@ -52,12 +52,15 @@ import java.util.stream.Collectors;
                 .orElseThrow(() -> new NotFoundException("Task not found"));
     }
 
-    public List<TaskDto> searchTasks(Principal principal, String searchText) {
+    public Boolean deleteTask(Principal principal, Long taskId){
         String username = principal.getName();
-        return taskRepository.findByUsernameAndBodyContaining(username, searchText)
-                .stream()
-                .map(taskMapper::map)
-                .collect(Collectors.toList());
+        boolean isDeleted = taskRepository.deleteByUsernameAndId(username, taskId);
+
+        if (!isDeleted) {
+            throw new NotFoundException("Task not found");
+        }
+
+        return true;
     }
 
     public List<TaskDto> searchTasksAllRows(Principal principal, String body, String priority, String category,

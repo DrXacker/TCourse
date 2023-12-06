@@ -31,17 +31,12 @@ public class AuthService {
 
     public ResponseEntity<TokenDto> authorizeUser(@RequestBody UserDto user) throws UnauthorizedException {
         try {
-            // authenticate user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-            // load user details
             UserDetails userDetails = userService.loadUserByUsername(user.getUsername());
-            // generate JWT token
             String token = jwtTokenUtil.generateToken(userDetails);
-            // return token
             return ResponseEntity.ok(new TokenDto(token));
         } catch (AuthenticationException e) {
-            // handle authentication errors
             throw new UnauthorizedException("Invalid email/password");
         }
     }
